@@ -12,11 +12,9 @@ class TaskQueue(object):
     """Task Queue class that handles assigning and
     un-assigning tasks to different Scalers."""
 
-    # TODO REMOVE ACTUAL STRING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     def __init__(self):
-        # os.environ['DATABASE_URL'] ||
-        self.db_url = 'postgres://ujewalhxdffzkq:023bd2d9c6975215bd272d1020345825388cfaa0a8eeeadff610c1692a920c2c@ec2-54-243-185-123.compute-1.amazonaws.com:5432/dbuhoc7nnd5jkt'
-        self.connection = connectionForURI(db_url)
+        self.db_url = os.environ['DATABASE_URL']
+        self.connection = connectionForURI(self.db_url)
         sqlhub.processConnection = self.connection # ensures every query uses this self.connection
 
     def __len__(self):

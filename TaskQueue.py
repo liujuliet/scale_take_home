@@ -132,7 +132,7 @@ class TaskQueue(object):
                 values={'assigned_to': scaler_id},
                 where='id={}'.format(_id))
 
-            update_query = self.connection.sqlrepr(push_queue)
+            update_query = self.connection.sqlrepr(update_task)
             self.connection.query(update_query)
 
         return task_ids

@@ -1,12 +1,13 @@
-from datetime import datetime, timedelta
 import os
+
+from datetime import datetime, timedelta
 from sqlobject import sqlhub, connectionForURI
+from sqlobject.sqlbuilder import Delete
 from sqlobject.sqlbuilder import Insert
 from sqlobject.sqlbuilder import Select
 from sqlobject.sqlbuilder import sqlrepr
 from sqlobject.sqlbuilder import Table
 from sqlobject.sqlbuilder import Update
-
 
 class TaskQueue(object):
     """Task Queue class that handles assigning and

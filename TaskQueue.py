@@ -25,11 +25,11 @@ class TaskQueue(object):
             The created task object
 
         """
-        if lower(urgency) == 'immediate':
+        if urgency.lower() == 'immediate':
             additional = timedelta(hours=1)
-        elif lower(urgency) == 'day':
+        elif urgency.lower() == 'day':
             additional = timedelta(days=1)
-        elif lower(urgency) == 'week':
+        elif urgency.lower() == 'week':
             additional = timedelta(weeks=1)
         else:
             additional = None

@@ -1,4 +1,5 @@
 from TaskQueue import TaskQueue
+import time
 import unittest
 
 class MainTestCase(unittest.TestCase):
@@ -23,6 +24,7 @@ class MainTestCase(unittest.TestCase):
 
         self.queue.complete_task(newly_assigned_task)
 
+        time.sleep(2)
         self.assertEqual(len(self.queue), 0, 'Completed task was not removed from the queue.')
 
     def test_receive_tasks(self):

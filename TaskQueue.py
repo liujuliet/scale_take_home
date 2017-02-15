@@ -16,7 +16,7 @@ class TaskQueue(object):
     def __init__(self):
         self.db_url = os.environ['DATABASE_URL']
         self.connection = connectionForURI(self.db_url)
-        sqlhub.processConnection = self.connection # ensures every query uses this self.connection
+        sqlhub.processConnection = self.connection
 
     def __len__(self):
         count_queue_tasks = "SELECT COUNT(task_id) FROM queue"

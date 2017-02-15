@@ -7,13 +7,24 @@ from sqlobject.sqlbuilder import sqlrepr
 from sqlobject.sqlbuilder import Table
 from sqlobject.sqlbuilder import Update
 
-db_url = os.environ['DATABASE_URL']
-connection = connectionForURI(db_url)
-sqlhub.processConnection = connection # ensures every query uses this connection
 
 class TaskQueue(object):
     """Task Queue class that handles assigning and
     un-assigning tasks to different Scalers."""
+
+    # TODO REMOVE ACTUAL STRING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    def __init__(self):
+        # os.environ['DATABASE_URL'] ||
+        self.db_url = 'postgres://ujewalhxdffzkq:023bd2d9c6975215bd272d1020345825388cfaa0a8eeeadff610c1692a920c2c@ec2-54-243-185-123.compute-1.amazonaws.com:5432/dbuhoc7nnd5jkt'
+        self.connection = connectionForURI(db_url)
+        sqlhub.processConnection = self.connection # ensures every query uses this self.connection
+
+    def __len__(self):
+        count_queue_tasks = "SELECT COUNT(task_id) FROM queue"
+        row = self.connection.queryAll(count_queue_tasks)
+        length = row[0][0]
+
+        return length
 
     def create_task(self, urgency):
         """Creates a task with the given urgency.
@@ -51,11 +62,11 @@ class TaskQueue(object):
             'urgency': urgency
         })
 
-        task_query = connection.sqlrepr(insert_task)
-        connection.query(task_query)
+        task_query = self.connection.sqlrepr(insert_task)
+        self.connection.query(task_query)
 
         get_id_query = "SELECT currval('tasks_id_seq')"
-        row = connection.queryAll(get_id_query)
+        row = self.connection.queryAll(get_id_query)
         task_id = int(row[0][0])
 
         self._enqueue(task_id=task_id, complete_by=complete_by)
@@ -71,7 +82,7 @@ class TaskQueue(object):
 
         """
 
-        if not self._check_status_pending(task_id):
+        if not self.check_status(task_id, 'PENDING'):
             raise ValueError("Task with id={} was not pending".format(task_id))
 
         self._change_status(task_id=task_id, new_status='COMPLETED')
@@ -86,7 +97,7 @@ class TaskQueue(object):
             The updated task id
 
         """
-        if not self._check_status_pending(task_id):
+        if not self.check_status(task_id, 'PENDING'):
             raise ValueError("Task with id={} was not pending".format(task_id))
 
         self._change_status(task_id=task_id, new_status='CANCELED')
@@ -97,8 +108,6 @@ class TaskQueue(object):
     def receive_tasks(self, scaler_id, batch_size):
         """Assigns a batch of the highest priority batch_size tasks to
         Scaler with scaler_id.
-
-        E.g. if batch_size = 3, get 3 of the highest priority tasks
 
         Returns:
             The batch of assigned task ids in a list
@@ -113,8 +122,8 @@ class TaskQueue(object):
             orderBy='complete_by'
         )
 
-        query = connection.sqlrepr(select_tasks)
-        batch = connection.queryAll(query)
+        query = self.connection.sqlrepr(select_tasks)
+        batch = self.connection.queryAll(query)
 
         task_ids = [int(t[0]) for t in batch]
 
@@ -125,8 +134,8 @@ class TaskQueue(object):
                 values={'assigned_to': scaler_id},
                 where='id={}'.format(_id))
 
-            update_query = connection.sqlrepr(push_queue)
-            connection.query(update_query)
+            update_query = self.connection.sqlrepr(push_queue)
+            self.connection.query(update_query)
 
         return task_ids
 
@@ -144,8 +153,8 @@ class TaskQueue(object):
             where='assigned_to={}'.format(scaler_id)
         )
 
-        query = connection.sqlrepr(get_tasks)
-        assigned_tasks = connection.queryAll(query)
+        query = self.connection.sqlrepr(get_tasks)
+        assigned_tasks = self.connection.queryAll(query)
 
         task_ids = [int(t[0]) for t in batch]
         clauses = [task_table.id == iden for iden in task_ids]
@@ -159,12 +168,25 @@ class TaskQueue(object):
                 values={'assigned_to': None},
                 where=where_statement)
 
-        update_query1 = connection.sqlrepr(update_statuses)
-        update_query2 = connection.sqlrepr(update_assignments)
-        connection.query(update_query1)
-        connection.query(update_query2)
+        update_query1 = self.connection.sqlrepr(update_statuses)
+        update_query2 = self.connection.sqlrepr(update_assignments)
+        self.connection.query(update_query1)
+        self.connection.query(update_query2)
 
         return task_ids
+
+    def check_status(self, task_id, status):
+        get_status_query = "SELECT status FROM tasks WHERE id={}".format(task_id)
+        row = self.connection.queryAll(get_status_query)
+        task_status = row[0][0]
+
+        return task_status.lower() == status.lower()
+
+    def clear_table(self, table_name):
+        clear_table_query = "DELETE FROM {}".format(table_name)
+        self.connection.query(clear_table_query)
+
+        return
 
     def _enqueue(self, task_id, complete_by):
         queue_table = Table('queue')
@@ -174,8 +196,8 @@ class TaskQueue(object):
             'complete_by': complete_by
         })
 
-        queue_query = connection.sqlrepr(push_queue)
-        connection.query(queue_query)
+        queue_query = self.connection.sqlrepr(push_queue)
+        self.connection.query(queue_query)
 
         return
 
@@ -185,17 +207,10 @@ class TaskQueue(object):
         where_statement = 'task_id={}'.format(task_id)
         pop_queue = Delete(queue_table, where=where_statement)
 
-        queue_query = connection.sqlrepr(pop_queue)
-        connection.query(queue_query)
+        queue_query = self.connection.sqlrepr(pop_queue)
+        self.connection.query(queue_query)
 
         return
-
-    def _check_status_pending(self, task_id):
-        get_status_query = "SELECT status FROM tasks WHERE id={}".format(task_id)
-        row = connection.queryAll(get_status_query)
-        task_status = row[0][0]
-
-        return lower(task_status) == 'pending'
 
     def _change_status(self, task_id, new_status):
         task_table = Table('tasks')
@@ -204,14 +219,14 @@ class TaskQueue(object):
         update_task = Update(task_table, values={'status': new_status},
             where=where_statement)
 
-        task_query = connection.sqlrepr(update_task)
-        connection.query(task_query)
+        task_query = self.connection.sqlrepr(update_task)
+        self.connection.query(task_query)
 
         if new_status == 'COMPLETED':
             update = Update(task_table, values={'completed_at': str(datetime.now())},
                 where=where_statement)
 
-            task_query = connection.sqlrepr(update)
-            connection.query(task_query)
+            task_query = self.connection.sqlrepr(update)
+            self.connection.query(task_query)
 
         return

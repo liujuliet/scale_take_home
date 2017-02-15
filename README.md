@@ -34,7 +34,7 @@ I've added an attribute for tasks called `complete_by` to order the tasks in the
 * complete_by timestamp,
 * completed_at timestamp,
 * status text,
-* urgency varchar (50),
+* urgency text,
 * assigned_to integer
 
 `queue` table schema:

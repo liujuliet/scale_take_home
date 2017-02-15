@@ -6,6 +6,8 @@ class MainTestCase(unittest.TestCase):
     def setUp(self):
         # create tasks
         self.queue = TaskQueue()
+        self.queue.clear_table(table_name='tasks')
+        self.queue.clear_table(table_name='queue')
 
     def tearDown(self):
         self.queue.clear_table(table_name='tasks')

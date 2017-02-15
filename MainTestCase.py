@@ -13,6 +13,7 @@ class MainTestCase(unittest.TestCase):
         self.queue.clear_table(table_name='queue')
 
     def test_complete_task(self):
+        print 'Testing complete_task() method'
         task_id = self.queue.create_task(urgency = 'week')
         print 'Created a task with id={}'.format(task_id)
 
@@ -30,6 +31,7 @@ class MainTestCase(unittest.TestCase):
         self.assertEqual(len(self.queue), 0, 'Completed task was not removed from the queue.')
 
     def test_receive_tasks(self):
+        print '\nTesting receive_tasks() method'
         task_id1 = self.queue.create_task(urgency = 'immediate')
         task_id2 = self.queue.create_task(urgency = 'immediate')
         task_id3 = self.queue.create_task(urgency = 'immediate')
